@@ -208,7 +208,7 @@ namespace Oxide.Plugins
                 Container?.Kill();
             }
 
-            public void RestoreItems(ulong userID, ItemContainer container)
+            void RestoreItems(ulong userID, ItemContainer container)
             {
                 List<ItemData> items = plugin.storage.FindItemsByID(userID);
 
@@ -220,7 +220,7 @@ namespace Oxide.Plugins
                 }
             }
 
-            public void SaveItems(ulong userID, ItemContainer container)
+            void SaveItems(ulong userID, ItemContainer container)
             {
                 List<ItemData> items = plugin.storage.FindItemsByID(userID);
 
