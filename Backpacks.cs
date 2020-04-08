@@ -100,7 +100,15 @@ namespace Oxide.Plugins
             SaveData();
         }
 
-        void OnPlayerConnected(BasePlayer player) => LootController.Find(player);
+        void OnPlayerConnected(BasePlayer player)
+        {
+            if (!permission.UserHasPermission(player.UserIDString, permUse))
+            {
+                return;
+            }
+
+            LootController.Find(player);
+        }
 
         void OnPlayerDisconnected(BasePlayer player)
         {
