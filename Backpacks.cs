@@ -11,7 +11,7 @@ namespace Oxide.Plugins
         #region Fields
         const string _permUse = "backpacks.use";
         List<LootController> _controllers = new List<LootController>();
-        BackpackData _stored;
+        BackpackData _data;
         ConfigData _config;
         public static Backpacks plugin;
         #endregion
@@ -46,7 +46,7 @@ namespace Oxide.Plugins
             }
         }
 
-        void SaveData() => Interface.Oxide.DataFileSystem.WriteObject(Name, _stored);
+        void SaveData() => Interface.Oxide.DataFileSystem.WriteObject(Name, _data);
         #endregion
 
         #region Config
@@ -81,7 +81,7 @@ namespace Oxide.Plugins
         {
             plugin = this;
             _config = Config.ReadObject<ConfigData>();
-            _stored = Interface.Oxide.DataFileSystem.ReadObject<BackpackData>(Name);
+            _data = Interface.Oxide.DataFileSystem.ReadObject<BackpackData>(Name);
         }
 
         void Unload()
@@ -94,7 +94,7 @@ namespace Oxide.Plugins
 
         void OnNewSave(string filename)
         {
-            _stored.Players.Clear();
+            _data.Players.Clear();
             SaveData();
         }
 
@@ -216,7 +216,7 @@ namespace Oxide.Plugins
 
             void RestoreItems(ulong userID, ItemContainer container)
             {
-                List<ItemData> items = plugin._stored.FindItemsByID(userID);
+                List<ItemData> items = plugin._data.FindItemsByID(userID);
 
                 foreach (ItemData itemData in items)
                 {
@@ -228,7 +228,7 @@ namespace Oxide.Plugins
 
             void SaveItems(ulong userID, ItemContainer container)
             {
-                List<ItemData> items = plugin._stored.FindItemsByID(userID);
+                List<ItemData> items = plugin._data.FindItemsByID(userID);
 
                 items.Clear();
 
