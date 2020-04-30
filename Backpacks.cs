@@ -4,21 +4,20 @@ using Object = UnityEngine.Object;
 
 namespace Oxide.Plugins
 {
-    [Info("Backpacks", "Bazz3l", "1.0.0")]
-    [Description("Personal backpack storage for players")]
+    [Info("Backpacks", "Bazz3l", "1.0.1")]
+    [Description("Personal backpack stored for players")]
     class Backpacks : RustPlugin
     {
         #region Fields
-        const string permUse = "backpacks.use";
+        const string _permUse = "backpacks.use";
 
-        static List<LootController> controllers = new List<LootController>();
-        static Backpacks plugin;
-        
-        BackpackData storage;
-        ConfigData config;
+        List<LootController> _controllers = new List<LootController>();
+        public static Backpacks plugin;
+        BackpackData _stored;
+        ConfigData _config;
         #endregion
 
-        #region Storage
+        #region stored
         class BackpackData
         {
             public Dictionary<ulong, List<ItemData>> Players = new Dictionary<ulong, List<ItemData>>();
@@ -48,7 +47,7 @@ namespace Oxide.Plugins
             }
         }
 
-        void SaveData() => Interface.Oxide.DataFileSystem.WriteObject(Name, storage);
+        void SaveData() => Interface.Oxide.DataFileSystem.WriteObject(Name, _stored);
         #endregion
 
         #region Config
@@ -71,7 +70,7 @@ namespace Oxide.Plugins
 
         void OnServerInitialized()
         {
-            permission.RegisterPermission(permUse, this);
+            permission.RegisterPermission(_permUse, this);
 
             foreach(BasePlayer player in BasePlayer.activePlayerList)
             {
@@ -82,13 +81,13 @@ namespace Oxide.Plugins
         void Init()
         {
             plugin = this;
-            config = Config.ReadObject<ConfigData>();
-            storage = Interface.Oxide.DataFileSystem.ReadObject<BackpackData>(Name);
+            _config = Config.ReadObject<ConfigData>();
+            _stored = Interface.Oxide.DataFileSystem.ReadObject<BackpackData>(Name);
         }
 
         void Unload()
         {
-            foreach(LootController controller in controllers)
+            foreach(LootController controller in _controllers)
             {
                 controller?.Destroy();
             }
@@ -96,13 +95,13 @@ namespace Oxide.Plugins
 
         void OnNewSave(string filename)
         {
-            storage.Players.Clear();
+            _stored.Players.Clear();
             SaveData();
         }
 
         void OnPlayerConnected(BasePlayer player)
         {
-            if (!permission.UserHasPermission(player.UserIDString, permUse))
+            if (!permission.UserHasPermission(player.UserIDString, _permUse))
             {
                 return;
             }
@@ -120,7 +119,7 @@ namespace Oxide.Plugins
             
             controller?.Destroy();
 
-            controllers.Remove(controller);
+            _controllers.Remove(controller);
         }
 
         void OnPlayerLootEnd(PlayerLoot loot)
@@ -164,9 +163,9 @@ namespace Oxide.Plugins
 
                 Container = new ItemContainer {
                     allowedContents = ItemContainer.ContentsType.Generic,
-                    capacity    = plugin.config.ContainerCapacity,
+                    capacity = plugin._config.ContainerCapacity,
                     entityOwner = player,
-                    isServer    = true
+                    isServer = true
                 };
 
                 Container.GiveUID();
@@ -174,12 +173,12 @@ namespace Oxide.Plugins
 
             public static LootController Find(BasePlayer player)
             {
-                LootController controller = controllers.Find(x => x.Player.userID == player.userID);
+                LootController controller = plugin._controllers.Find(x => x.Player.userID == player.userID);
                 if (controller == null)
                 {
                     controller = new LootController(player);
 
-                    controllers.Add(controller);
+                    plugin._controllers.Add(controller);
                 }
 
                 return controller;
@@ -218,7 +217,7 @@ namespace Oxide.Plugins
 
             void RestoreItems(ulong userID, ItemContainer container)
             {
-                List<ItemData> items = plugin.storage.FindItemsByID(userID);
+                List<ItemData> items = plugin._stored.FindItemsByID(userID);
 
                 foreach (ItemData itemData in items)
                 {
@@ -230,7 +229,7 @@ namespace Oxide.Plugins
 
             void SaveItems(ulong userID, ItemContainer container)
             {
-                List<ItemData> items = plugin.storage.FindItemsByID(userID);
+                List<ItemData> items = plugin._stored.FindItemsByID(userID);
 
                 items.Clear();
 
@@ -252,7 +251,7 @@ namespace Oxide.Plugins
         [ChatCommand("backpack")]
         void BackpackCommand(BasePlayer player, string cmd, string[] args)
         {
-            if (!permission.UserHasPermission(player.UserIDString, permUse))
+            if (!permission.UserHasPermission(player.UserIDString, _permUse))
             {
                 return;
             }
