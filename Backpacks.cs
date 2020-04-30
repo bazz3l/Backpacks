@@ -5,16 +5,15 @@ using Object = UnityEngine.Object;
 namespace Oxide.Plugins
 {
     [Info("Backpacks", "Bazz3l", "1.0.1")]
-    [Description("Personal backpack stored for players")]
+    [Description("Allows player to store items in an hidden backpack")]
     class Backpacks : RustPlugin
     {
         #region Fields
         const string _permUse = "backpacks.use";
-
         List<LootController> _controllers = new List<LootController>();
-        public static Backpacks plugin;
         BackpackData _stored;
         ConfigData _config;
+        public static Backpacks plugin;
         #endregion
 
         #region stored
