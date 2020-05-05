@@ -4,16 +4,16 @@ using Object = UnityEngine.Object;
 
 namespace Oxide.Plugins
 {
-    [Info("Backpacks", "Bazz3l", "1.0.1")]
+    [Info("Backpacks", "Bazz3l", "1.0.2")]
     [Description("Allows player to store items in an hidden backpack")]
     class Backpacks : RustPlugin
     {
         #region Fields
         const string _permUse = "backpacks.use";
         List<LootController> _controllers = new List<LootController>();
-        BackpackData _data;
-        ConfigData _config;
-        public static Backpacks plugin;
+        BackpackData _backpackData;
+        PluginConfig _config;
+        public static Backpacks Instance;
         #endregion
 
         #region stored
@@ -46,19 +46,19 @@ namespace Oxide.Plugins
             }
         }
 
-        void SaveData() => Interface.Oxide.DataFileSystem.WriteObject(Name, _data);
+        void SaveData() => Interface.Oxide.DataFileSystem.WriteObject(Name, _backpackData);
         #endregion
 
         #region Config
-        ConfigData GetDefaultConfig()
+        PluginConfig GetDefaultConfig()
         {
-            return new ConfigData
+            return new PluginConfig
             {
                 ContainerCapacity = 6
             };
         }
 
-        class ConfigData
+        class PluginConfig
         {
             public int ContainerCapacity;
         }
@@ -79,9 +79,9 @@ namespace Oxide.Plugins
 
         void Init()
         {
-            plugin = this;
-            _config = Config.ReadObject<ConfigData>();
-            _data = Interface.Oxide.DataFileSystem.ReadObject<BackpackData>(Name);
+            Instance = this;
+            _config = Config.ReadObject<PluginConfig>();
+            _backpackData = Interface.Oxide.DataFileSystem.ReadObject<BackpackData>(Name);
         }
 
         void Unload()
@@ -94,7 +94,7 @@ namespace Oxide.Plugins
 
         void OnNewSave(string filename)
         {
-            _data.Players.Clear();
+            _backpackData.Players.Clear();
             SaveData();
         }
 
@@ -129,7 +129,15 @@ namespace Oxide.Plugins
                 return;
             }
 
-            LootController.Find(player)?.Close();
+            LootController controller = LootController.Find(player);
+            if (controller == null)
+            {
+                return;
+            }
+
+            controller?.Destroy();
+
+            _controllers.Remove(controller);
         }
 
         object CanLootPlayer(BasePlayer looter, Object target)
@@ -162,7 +170,7 @@ namespace Oxide.Plugins
 
                 Container = new ItemContainer {
                     allowedContents = ItemContainer.ContentsType.Generic,
-                    capacity = plugin._config.ContainerCapacity,
+                    capacity = Instance._config.ContainerCapacity,
                     entityOwner = player,
                     isServer = true
                 };
@@ -172,12 +180,12 @@ namespace Oxide.Plugins
 
             public static LootController Find(BasePlayer player)
             {
-                LootController controller = plugin._controllers.Find(x => x.Player.userID == player.userID);
+                LootController controller = Instance._controllers.Find(x => x.Player.userID == player.userID);
                 if (controller == null)
                 {
                     controller = new LootController(player);
 
-                    plugin._controllers.Add(controller);
+                    Instance._controllers.Add(controller);
                 }
 
                 return controller;
@@ -216,7 +224,7 @@ namespace Oxide.Plugins
 
             void RestoreItems(ulong userID, ItemContainer container)
             {
-                List<ItemData> items = plugin._data.FindItemsByID(userID);
+                List<ItemData> items = Instance._backpackData.FindItemsByID(userID);
 
                 foreach (ItemData itemData in items)
                 {
@@ -228,7 +236,7 @@ namespace Oxide.Plugins
 
             void SaveItems(ulong userID, ItemContainer container)
             {
-                List<ItemData> items = plugin._data.FindItemsByID(userID);
+                List<ItemData> items = Instance._backpackData.FindItemsByID(userID);
 
                 items.Clear();
 
@@ -237,7 +245,7 @@ namespace Oxide.Plugins
                     items.Add(new ItemData(item.info.shortname, item.amount));
                 }
 
-                plugin.SaveData();
+                Instance.SaveData();
 
                 container.Clear();
 
