@@ -4,15 +4,17 @@ using Object = UnityEngine.Object;
 
 namespace Oxide.Plugins
 {
-    [Info("Backpacks", "Bazz3l", "1.0.2")]
+    [Info("Backpacks", "Bazz3l", "1.0.3")]
     [Description("Allows player to store items in an hidden backpack")]
     class Backpacks : RustPlugin
     {
         #region Fields
         const string _permUse = "backpacks.use";
+
         List<LootController> _controllers = new List<LootController>();
         BackpackData _backpackData;
         PluginConfig _config;
+
         public static Backpacks Instance;
         #endregion
 
@@ -37,12 +39,14 @@ namespace Oxide.Plugins
         class ItemData
         {
             public string Shortname;
+            public ulong Skin;
             public int Amount;
 
-            public ItemData(string shortname, int amount)
+            public ItemData(string shortname, ulong skin, int amount)
             {
-                this.Shortname = shortname;
-                this.Amount = amount;
+                Shortname = shortname;
+                Skin = skin;
+                Amount = amount;
             }
         }
 
@@ -115,7 +119,7 @@ namespace Oxide.Plugins
             {
                 return;
             }
-            
+
             controller?.Destroy();
 
             _controllers.Remove(controller);
@@ -194,7 +198,7 @@ namespace Oxide.Plugins
             public void Open()
             {
                 IsOpen = true;
-                
+
                 PlayerLoot loot = Player.inventory.loot;
                 loot.Clear();
                 loot.PositionChecks = false;
@@ -204,7 +208,7 @@ namespace Oxide.Plugins
                 loot.SendImmediate();
 
                 RestoreItems(Player.userID, Container);
-                
+
                 Player.ClientRPCPlayer(null, Player, "RPC_OpenLootPanel", "generic");
             }
 
@@ -228,7 +232,7 @@ namespace Oxide.Plugins
 
                 foreach (ItemData itemData in items)
                 {
-                    Item item = ItemManager.CreateByName(itemData.Shortname, itemData.Amount);
+                    Item item = ItemManager.CreateByName(itemData.Shortname, itemData.Amount, itemData.Skin);
 
                     item?.MoveToContainer(container);
                 }
@@ -242,7 +246,7 @@ namespace Oxide.Plugins
 
                 foreach (Item item in container.itemList)
                 {
-                    items.Add(new ItemData(item.info.shortname, item.amount));
+                    items.Add(new ItemData(item.info.shortname, item.skin, item.amount));
                 }
 
                 Instance.SaveData();
